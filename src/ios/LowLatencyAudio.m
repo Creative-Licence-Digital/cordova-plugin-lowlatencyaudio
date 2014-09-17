@@ -34,13 +34,13 @@ NSString* RESTRICTED = @"ACTION RESTRICTED FOR FX AUDIO";
 {
     // do some init work here.
 
-    // set up Audio so that user can play own music
+    // set up audio so that user can play his own music
+    // the audio is still silenced by screen locking and by the Silent switch
     AudioSessionInitialize(NULL, NULL, nil , nil);
     AVAudioSession *session = [AVAudioSession sharedInstance];
     
     NSError *setCategoryError = nil;
-    if (![session setCategory:AVAudioSessionCategoryPlayback
-                  withOptions:AVAudioSessionCategoryOptionMixWithOthers
+    if (![session setCategory:AVAudioSessionCategoryAmbient
                         error:&setCategoryError]) {
         // handle error
     }
