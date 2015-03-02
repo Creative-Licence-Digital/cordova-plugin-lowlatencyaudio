@@ -137,7 +137,13 @@ NSString* RESTRICTED = @"ACTION RESTRICTED FOR FX AUDIO";
     [self.commandDelegate runInBackground:^{
         if (existingReference == nil) {
             NSString* basePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"www"];
-            NSString* path = [NSString stringWithFormat:@"%@/%@", basePath, assetPath];
+            NSString* path;
+            if ([assetPath hasPrefix:@"file://"]) {
+              path = [assetPath stringByReplacingOccurrencesOfString:@"file://" withString:@""];
+            } else {
+              NSString* basePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"www"];
+              path = [NSString stringWithFormat:@"%@/%@", basePath, assetPath];
+            }
             
             if ([[NSFileManager defaultManager] fileExistsAtPath : path]) {
                 LowLatencyAudioAsset* asset = [[LowLatencyAudioAsset alloc] initWithPath:path withVoices:voices withVolume:volume];
