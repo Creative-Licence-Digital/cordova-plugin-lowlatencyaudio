@@ -31,4 +31,6 @@
 - (void) stop;
 - (void) loop;
 - (void) unload;
+- (void) fadeIn:(NSNumber*) ms withIncrement:(NSNumber*) increment;
+- (void) fadeOut:(NSNumber*) ms withIncrement:(NSNumber*) increment;
 @end

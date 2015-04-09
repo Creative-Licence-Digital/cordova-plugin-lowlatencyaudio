@@ -186,6 +186,66 @@ NSString* RESTRICTED = @"ACTION RESTRICTED FOR FX AUDIO";
         }];
 }
 
+
+- (void) fadeIn:(CDVInvokedUrlCommand *)command
+{
+    CDVPluginResult *pluginResult;
+    NSString *callbackId = command.callbackId;
+    NSArray* arguments = command.arguments;
+    NSString *audioID = [arguments objectAtIndex:0];
+    NSNumber *ms = [arguments objectAtIndex:1];
+    NSNumber *increment = [arguments objectAtIndex:2];
+    
+    
+    NSLog( @"loop - %@", audioID );
+    
+    if ( audioMapping ) {
+        NSObject* asset = [audioMapping objectForKey: audioID];
+        if ([asset isKindOfClass:[LowLatencyAudioAsset class]]) {
+            LowLatencyAudioAsset *_asset = (LowLatencyAudioAsset*) asset;
+            [_asset fadeIn:ms withIncrement:increment];
+            
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: STOP_REQUESTED];
+        } else if ( [asset isKindOfClass:[NSNumber class]] ) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESTRICTED];
+        }
+    } else {
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: ERROR_MISSING_REFERENCE];
+    }
+    
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
+}
+
+- (void) fadeOut:(CDVInvokedUrlCommand *)command
+{
+    CDVPluginResult *pluginResult;
+    NSString *callbackId = command.callbackId;
+    NSArray* arguments = command.arguments;
+    NSString *audioID = [arguments objectAtIndex:0];
+    NSNumber *ms = [arguments objectAtIndex:1];
+    NSNumber *increment = [arguments objectAtIndex:2];
+    
+    
+    //NSLog( @"stop - %@", audioID );
+    
+    if ( audioMapping ) {
+        NSObject* asset = [audioMapping objectForKey: audioID];
+        if ([asset isKindOfClass:[LowLatencyAudioAsset class]]) {
+            LowLatencyAudioAsset *_asset = (LowLatencyAudioAsset*) asset;
+            [_asset fadeOut:ms withIncrement:increment];
+            
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: STOP_REQUESTED];
+        } else if ( [asset isKindOfClass:[NSNumber class]] ) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESTRICTED];
+        }
+    } else {
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: ERROR_MISSING_REFERENCE];
+    }
+    
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
+}
+
+
 - (void) stop:(CDVInvokedUrlCommand *)command
 {
     CDVPluginResult *pluginResult;

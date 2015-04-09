@@ -69,6 +69,25 @@
     playIndex = playIndex % [voices count];
 }
 
+- (void) fadeIn:(NSNumber*) ms withIncrement:(NSNumber*) increment;
+{
+    [self stop];
+    AVAudioPlayer * player = [voices objectAtIndex:playIndex];
+    [player setCurrentTime:0.0];
+    player.numberOfLoops = -1;
+    [player play];
+    playIndex += 1;
+    playIndex = playIndex % [voices count];
+}
+
+- (void) fadeOut:(NSNumber*) ms withIncrement:(NSNumber*) increment;
+{
+    for (int x = 0; x < [voices count]; x++) {
+        AVAudioPlayer * player = [voices objectAtIndex:x];
+        [player stop];
+    }
+}
+
 - (void) unload 
 {
     [self stop];

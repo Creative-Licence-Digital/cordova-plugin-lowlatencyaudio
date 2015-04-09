@@ -32,6 +32,8 @@
 - (void) play:(CDVInvokedUrlCommand *)command;
 - (void) stop:(CDVInvokedUrlCommand *)command;
 - (void) loop:(CDVInvokedUrlCommand *)command;
+- (void) fadeIn:(CDVInvokedUrlCommand *)command;
+- (void) fadeOut:(CDVInvokedUrlCommand *)command;
 - (void) unload:(CDVInvokedUrlCommand *)command;
 
 
