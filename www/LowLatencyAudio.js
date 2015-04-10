@@ -1,4 +1,4 @@
-cordova.define("com.creativelicencedigital.cordova.plugin.lowlatencyaudio.LowLatencyAudio", function(require, exports, module) { /*
+/*
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -47,15 +47,14 @@ module.exports  = {
     },
                
     fadeIn: function(id, ms, increment, success, fail) {
-        return cordova.exec(success, fail, "LowLatencyAudio", "stop", [id, ms, increment]);
+        return cordova.exec(success, fail, "LowLatencyAudio", "fadeIn", [id, ms, increment]);
     },
                
     fadeOut: function(id, ms, increment, success, fail) {
-        return cordova.exec(success, fail, "LowLatencyAudio", "loop", [id, ms, increment]);
+        return cordova.exec(success, fail, "LowLatencyAudio", "fadeOut", [id, ms, increment]);
     },
 
     unload: function(id, success, fail) {
         return cordova.exec(success, fail, "LowLatencyAudio", "unload", [id]);
     }
 };
-});

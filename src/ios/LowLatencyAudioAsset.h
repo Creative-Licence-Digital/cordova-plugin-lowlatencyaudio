@@ -22,8 +22,11 @@
 
 
 @interface LowLatencyAudioAsset : NSObject {
-    NSMutableArray* voices;
+    AVAudioPlayer * player;
     int playIndex;
+    int _ms;
+    float _increment;
+    float _targetVolume;
 }
 
 -(id) initWithPath:(NSString*) path withVoices:(NSNumber*) numVoices withVolume:(NSNumber*) volume;

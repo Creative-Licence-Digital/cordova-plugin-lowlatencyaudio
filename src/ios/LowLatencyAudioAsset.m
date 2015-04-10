@@ -24,17 +24,13 @@
 {
     self = [super init];
     if(self) {
-        voices = [[NSMutableArray alloc] init];  
         
         NSURL *pathURL = [NSURL fileURLWithPath : path];
-        
-        for (int x = 0; x < [numVoices intValue]; x++) {
-            AVAudioPlayer *player = [[AVAudioPlayer alloc] initWithContentsOfURL:pathURL error: NULL];
-            player.volume = volume.floatValue;
-            [player prepareToPlay];
-            [voices addObject:player];
-        }
-        
+
+        player = [[AVAudioPlayer alloc] initWithContentsOfURL:pathURL error: NULL];
+        player.volume = volume.floatValue;
+        _targetVolume = [volume floatValue];
+        [player prepareToPlay];
         playIndex = 0;
     }
     return(self);
@@ -42,48 +38,61 @@
 
 - (void) play
 {
-    AVAudioPlayer * player = [voices objectAtIndex:playIndex];
     [player setCurrentTime:0.0];
     player.numberOfLoops = 0;
     [player play];
-    playIndex += 1;
-    playIndex = playIndex % [voices count];
 }
 
 - (void) stop
 {
-    for (int x = 0; x < [voices count]; x++) {
-        AVAudioPlayer * player = [voices objectAtIndex:x];
-        [player stop];
-    }
+    [player stop];
 }
 
 - (void) loop
 {
     [self stop];
-    AVAudioPlayer * player = [voices objectAtIndex:playIndex];
     [player setCurrentTime:0.0];
     player.numberOfLoops = -1;
     [player play];
-    playIndex += 1;
-    playIndex = playIndex % [voices count];
 }
 
 - (void) fadeIn:(NSNumber*) ms withIncrement:(NSNumber*) increment;
 {
     [self stop];
-    AVAudioPlayer * player = [voices objectAtIndex:playIndex];
+    _ms = [ms integerValue];
+    _increment = [increment floatValue];
     [player setCurrentTime:0.0];
     player.numberOfLoops = -1;
+    player.volume = 0;
     [player play];
-    playIndex += 1;
-    playIndex = playIndex % [voices count];
+    [self doVolumeFadeIn];
 }
 
+
+-(void)doVolumeFadeIn {
+    if (player.volume < _targetVolume) {
+        player.volume += _increment;
+        float delay = _increment * _ms * 0.001;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+            [self doVolumeFadeIn];
+        });
+    }
+}
 - (void) fadeOut:(NSNumber*) ms withIncrement:(NSNumber*) increment;
 {
-    for (int x = 0; x < [voices count]; x++) {
-        AVAudioPlayer * player = [voices objectAtIndex:x];
+    _ms = [ms integerValue];
+    _increment = [increment floatValue];
+    [self doVolumeFadeOut];
+}
+
+-(void)doVolumeFadeOut {
+    if (player.volume > 0) {
+        player.volume -= _increment;
+        float delay = _increment * _ms * 0.001;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+            [self doVolumeFadeOut];
+        });
+    } else {
         [player stop];
     }
 }
@@ -91,11 +100,8 @@
 - (void) unload 
 {
     [self stop];
-    for (int x = 0; x < [voices count]; x++) {
-        AVAudioPlayer * player = [voices objectAtIndex:x];
-        player = nil;
-    }
-    voices = nil;
+    player = nil;
+
 }
 
 @end
