@@ -22,38 +22,41 @@ public class LowLatencyAudioAsset {
 
 	private ArrayList<PolyphonicVoice> voices;
 	private int playIndex = 0;
-	
+	private LowLatencyCompletionHandler savedHandler;
+
+
 	public LowLatencyAudioAsset(AssetFileDescriptor afd, int numVoices, float volume) throws IOException
 	{
 		voices = new ArrayList<PolyphonicVoice>();
-		
+
 		if ( numVoices < 0 )
 			numVoices = 0;
-		
-		for ( int x=0; x<numVoices; x++) 
+
+		for ( int x=0; x<numVoices; x++)
 		{
 			PolyphonicVoice voice = new PolyphonicVoice(afd, volume);
 			voices.add( voice );
 		}
 	}
-	
+
 	public void play() throws IOException
 	{
 		PolyphonicVoice voice = voices.get(playIndex);
+		voice.setComplectionHandler(savedHandler);
 		voice.play();
 		playIndex++;
 		playIndex = playIndex % voices.size();
 	}
-	
+
 	public void stop() throws IOException
 	{
-		for ( int x=0; x<voices.size(); x++) 
+		for ( int x=0; x<voices.size(); x++)
 		{
 			PolyphonicVoice voice = voices.get(x);
 			voice.stop();
 		}
 	}
-	
+
 	public void loop() throws IOException
 	{
 		PolyphonicVoice voice = voices.get(playIndex);
@@ -61,16 +64,20 @@ public class LowLatencyAudioAsset {
 		playIndex++;
 		playIndex = playIndex % voices.size();
 	}
-	
+
 	public void unload() throws IOException
 	{
 		this.stop();
-		for ( int x=0; x<voices.size(); x++) 
+		for ( int x=0; x<voices.size(); x++)
 		{
 			PolyphonicVoice voice = voices.get(x);
 			voice.unload();
 		}
 		voices.removeAll(voices);
 	}
-	
+
+	public void setComplectionHandler(LowLatencyCompletionHandler complectionHandler) {
+		this.savedHandler = complectionHandler;
+	}
+
 }

@@ -29,25 +29,33 @@ public class PolyphonicVoice implements OnPreparedListener, OnCompletionListener
 	private static final int PLAYING = 3;
 	private static final int PENDING_LOOP = 4;
 	private static final int LOOPING = 5;
-	
+
 	private MediaPlayer mp;
 	private int state;
-	
+
+	private LowLatencyCompletionHandler savedHandler;
+
 	public PolyphonicVoice( AssetFileDescriptor afd, float volume)  throws IOException
 	{
 		state = INVALID;
 		mp = new MediaPlayer();
 		mp.setDataSource( afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-		mp.setAudioStreamType(AudioManager.STREAM_MUSIC); 
+		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 		mp.setVolume(volume, volume);
 		mp.prepare();
+		mp.setOnCompletionListener(new OnCompletionListener() {
+			@Override
+			public void onCompletion(MediaPlayer mp) {
+				savedHandler.onFinishedPlayingAudio("PLAY FINISHED");
+			}
+		});
 	}
-	
+
 	public void play() throws IOException
 	{
 		invokePlay( false );
 	}
-	
+
 	private void invokePlay( Boolean loop )
 	{
 		Boolean playing = ( mp.isLooping() || mp.isPlaying() );
@@ -70,7 +78,7 @@ public class PolyphonicVoice implements OnPreparedListener, OnCompletionListener
 			mp.start();
 		}
 	}
-	
+
 	public void stop() throws IOException
 	{
 		if ( mp.isLooping() || mp.isPlaying() )
@@ -80,21 +88,21 @@ public class PolyphonicVoice implements OnPreparedListener, OnCompletionListener
 			mp.seekTo(0);
 		}
 	}
-	
+
 	public void loop() throws IOException
 	{
 		invokePlay( true );
 	}
-	
+
 	public void unload() throws IOException
 	{
 		this.stop();
 		mp.release();
 	}
-	
-	public void onPrepared(MediaPlayer mPlayer) 
+
+	public void onPrepared(MediaPlayer mPlayer)
 	{
-		if (state == PENDING_PLAY) 
+		if (state == PENDING_PLAY)
 		{
 			mp.setLooping(false);
 			mp.seekTo(0);
@@ -114,7 +122,7 @@ public class PolyphonicVoice implements OnPreparedListener, OnCompletionListener
 			mp.seekTo(0);
 		}
 	}
-	
+
 	public void onCompletion(MediaPlayer mPlayer)
 	{
 		if (state != LOOPING)
@@ -128,5 +136,9 @@ public class PolyphonicVoice implements OnPreparedListener, OnCompletionListener
 				e.printStackTrace();
 			}
 		}
+	}
+
+	public void setComplectionHandler(LowLatencyCompletionHandler complectionHandler) {
+		this.savedHandler = complectionHandler;
 	}
 }
