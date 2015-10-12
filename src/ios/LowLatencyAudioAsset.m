@@ -24,7 +24,7 @@
 {
     self = [super init];
     if(self) {
-        
+
         NSURL *pathURL = [NSURL fileURLWithPath : path];
 
         player = [[AVAudioPlayer alloc] initWithContentsOfURL:pathURL error: NULL];
@@ -32,6 +32,7 @@
         _targetVolume = [volume floatValue];
         [player prepareToPlay];
         playIndex = 0;
+        player.delegate = self;
     }
     return(self);
 }
@@ -97,11 +98,22 @@
     }
 }
 
-- (void) unload 
+- (void) unload
 {
     [self stop];
     player = nil;
 
+}
+
+# pragma mark - AVAudioPlayerDelegate methods
+
+- (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)audioPlayer successfully:(BOOL)flag {
+    self.audioPlayerEventDidOccur(audioPlayer, flag);
+}
+
+- (void) audioPlayerDecodeErrorDidOccur:(AVAudioPlayer *)audioPlayer error:(NSError *)error {
+    NSLog(@"audioPlayerDecodeErrorDidOccur: %@", error);
+    self.audioPlayerEventDidOccur(audioPlayer, 0);
 }
 
 @end

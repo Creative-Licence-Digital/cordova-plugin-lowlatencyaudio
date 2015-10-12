@@ -21,13 +21,15 @@
 #import <AVFoundation/AVAudioPlayer.h>
 
 
-@interface LowLatencyAudioAsset : NSObject {
+@interface LowLatencyAudioAsset : NSObject <AVAudioPlayerDelegate> {
     AVAudioPlayer * player;
     int playIndex;
     int _ms;
     float _increment;
     float _targetVolume;
 }
+
+@property (nonatomic, copy) void (^audioPlayerEventDidOccur)(AVAudioPlayer *player, NSInteger status);
 
 -(id) initWithPath:(NSString*) path withVoices:(NSNumber*) numVoices withVolume:(NSNumber*) volume;
 - (void) play;
