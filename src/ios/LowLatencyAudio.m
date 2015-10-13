@@ -69,29 +69,49 @@ NSString* RESTRICTED = @"ACTION RESTRICTED FOR FX AUDIO";
         NSString* basePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"www"];
         NSString* path = [NSString stringWithFormat:@"%@", assetPath];
         NSString* pathFromWWW = [NSString stringWithFormat:@"%@/%@", basePath, assetPath];
+        //NSLog(@"basePath: %@", basePath);
+        //NSLog(@"path: %@", path);
 
+        NSURL *pathURL;
+        if ([assetPath hasPrefix:@"http://"] || [assetPath hasPrefix:@"https://"]) {
+            NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+            NSString *path = paths.firstObject;
+            path = [path stringByAppendingPathComponent:audioID];
 
-        NSLog(@"basePath: %@", basePath);
-        NSLog(@"path: %@", path);
-        if ([[NSFileManager defaultManager] fileExistsAtPath : path]) {
-            NSURL *pathURL = [NSURL fileURLWithPath : path];
-            CFURLRef        soundFileURLRef = (CFURLRef) CFBridgingRetain(pathURL);
+            NSError *error;
+            NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:assetPath]
+                                                 options:NSDataReadingMappedIfSafe
+                                                   error:&error];
+            if (data && !error) {
+                pathURL = [NSURL fileURLWithPath: path];
+                [data writeToURL:pathURL options:NSDataWritingAtomic error:&error];
+                if (error) {
+                    NSLog(@"Error writing file to URL: %@", error);
+                    pathURL = nil;
+                }
+            }
+        }
+        else
+        {
+            if ([[NSFileManager defaultManager] fileExistsAtPath: path]) {
+                pathURL = [NSURL fileURLWithPath: path];
+            } else if ([[NSFileManager defaultManager] fileExistsAtPath: pathFromWWW]) {
+                pathURL = [NSURL fileURLWithPath: pathFromWWW];
+            }
+        }
+
+        if (pathURL) {
+            CFURLRef soundFileURLRef = (CFURLRef) CFBridgingRetain(pathURL);
             SystemSoundID soundID;
             AudioServicesCreateSystemSoundID(soundFileURLRef, & soundID);
-            [audioMapping setObject:[NSNumber numberWithInt:soundID]  forKey: audioID];
+            [audioMapping setObject:[NSNumber numberWithInt:soundID] forKey: audioID];
 
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: CONTENT_LOAD_REQUESTED];
-        } else if ([[NSFileManager defaultManager] fileExistsAtPath : pathFromWWW]) {
-            NSURL *pathURL = [NSURL fileURLWithPath : pathFromWWW];
-            CFURLRef        soundFileURLRef = (CFURLRef) CFBridgingRetain(pathURL);
-            SystemSoundID soundID;
-            AudioServicesCreateSystemSoundID(soundFileURLRef, & soundID);
-            [audioMapping setObject:[NSNumber numberWithInt:soundID]  forKey: audioID];
 
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: CONTENT_LOAD_REQUESTED];
         } else {
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: ERROR_NOT_FOUND];
         }
+
     } else {
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: WARN_EXISTING_REFERENCE];
     }
@@ -101,7 +121,7 @@ NSString* RESTRICTED = @"ACTION RESTRICTED FOR FX AUDIO";
 
 - (void) preloadAudio:(CDVInvokedUrlCommand *)command
 {
-        NSString *callbackId = command.callbackId;
+    NSString *callbackId = command.callbackId;
     NSArray* arguments = command.arguments;
     NSString *audioID = [arguments objectAtIndex:0];
     NSString *assetPath = [arguments objectAtIndex:1];
@@ -138,9 +158,20 @@ NSString* RESTRICTED = @"ACTION RESTRICTED FOR FX AUDIO";
 
     [self.commandDelegate runInBackground:^{
         if (existingReference == nil) {
-            NSString* basePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"www"];
             NSString* path;
-            if ([assetPath hasPrefix:@"file://"]) {
+
+            if ([assetPath hasPrefix:@"http://"] || [assetPath hasPrefix:@"https://"]) {
+                NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+                path = [paths.firstObject stringByAppendingPathComponent:audioID];
+
+                NSError *error;
+                NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:assetPath]
+                                                     options:NSDataReadingMappedIfSafe
+                                                       error:&error];
+                if (data && !error) {
+                    [data writeToURL:[NSURL fileURLWithPath: path] atomically:YES];
+                }
+            } else if ([assetPath hasPrefix:@"file://"]) {
               path = [assetPath stringByReplacingOccurrencesOfString:@"file://" withString:@""];
             } else {
               NSString* basePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"www"];
@@ -162,6 +193,7 @@ NSString* RESTRICTED = @"ACTION RESTRICTED FOR FX AUDIO";
 
     }];
 }
+
 
 - (void) play:(CDVInvokedUrlCommand *)command
 {
@@ -187,7 +219,6 @@ NSString* RESTRICTED = @"ACTION RESTRICTED FOR FX AUDIO";
                 NSNumber *_asset = (NSNumber*) asset;
                 AudioServicesPlaySystemSound([_asset intValue]);
             }
-
         } else {
             [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: ERROR_MISSING_REFERENCE] callbackId:callbackId];
         }
@@ -333,5 +364,6 @@ NSString* RESTRICTED = @"ACTION RESTRICTED FOR FX AUDIO";
 
     [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
 }
+
 
 @end
