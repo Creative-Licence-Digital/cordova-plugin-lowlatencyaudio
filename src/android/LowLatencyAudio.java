@@ -13,10 +13,21 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.rjfun.cordova.plugin;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.PluginResult;
+import org.apache.cordova.PluginResult.Status;
+import org.apache.http.util.ByteArrayBuffer;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -26,11 +37,6 @@ import android.content.res.AssetManager;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.util.Log;
-
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.PluginResult;
-import org.apache.cordova.PluginResult.Status;
 
 /**
  * @author Andrew Trice
@@ -107,19 +113,25 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 					voices = data.getInt(3);
 				}
 
-				String fullPath = "www/".concat(assetPath);
+				String fullPath;
+				LowLatencyAudioAsset asset;
+				if (assetPath.startsWith("http"))
+				{
+					fullPath = this.downloadFromUrl(assetPath, audioID);
+					asset = new LowLatencyAudioAsset(fullPath, voices, (float)volume);
+				} else {
+					fullPath = "www/".concat(assetPath);
+					Context ctx = cordova.getActivity().getApplicationContext();
+					AssetManager am = ctx.getResources().getAssets();
+					AssetFileDescriptor afd = am.openFd(fullPath);
+					asset = new LowLatencyAudioAsset(afd, voices, (float)volume);
+				}
 
-				Context ctx = cordova.getActivity().getApplicationContext();
-				AssetManager am = ctx.getResources().getAssets();
-				AssetFileDescriptor afd = am.openFd(fullPath);
-
-				LowLatencyAudioAsset asset = new LowLatencyAudioAsset(
-						afd, voices, (float)volume);
 				assetMap.put(audioID, asset);
 
 				return new PluginResult(Status.OK);
 			} else {
-				return new PluginResult(Status.ERROR, ERROR_AUDIOID_EXISTS);
+				return new PluginResult(Status.OK, ERROR_AUDIOID_EXISTS);
 			}
 		} catch (JSONException e) {
 			return new PluginResult(Status.ERROR, e.toString());
@@ -128,8 +140,48 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 		}
 	}
 
+	public String downloadFromUrl(String downloadUrl, String fileName) {
+		try {
+			Context ctx = cordova.getActivity().getApplicationContext();
+
+			URL url = new URL(downloadUrl); //you can write here any link
+			File file = new File(ctx.getFilesDir(), fileName);
+
+			long startTime = System.currentTimeMillis();
+			//Log.d("DownloadManager", "download begining");
+			//Log.d("DownloadManager", "download url:" + url);
+			//Log.d("DownloadManager", "downloaded file name:" + fileName);
+
+			/* Open a connection to that URL. */
+			URLConnection ucon = url.openConnection();
+
+			/* Define InputStreams to read from the URLConnection. */
+			InputStream is = ucon.getInputStream();
+			BufferedInputStream bis = new BufferedInputStream(is);
+
+			/* Read bytes to the Buffer until there is nothing more to read(-1). */
+			ByteArrayBuffer baf = new ByteArrayBuffer(5000);
+			int current = 0;
+			while ((current = bis.read()) != -1) {
+				baf.append((byte) current);
+			}
+
+			/* Convert the Bytes read to a String. */
+			FileOutputStream fos = new FileOutputStream(file);
+			fos.write(baf.toByteArray());
+			fos.flush();
+			fos.close();
+			Log.d("DownloadManager", "download ready in" + ((System.currentTimeMillis() - startTime) / 1000) + " sec");
+			return file.getAbsolutePath();
+		} catch (IOException e) {
+			Log.d("DownloadManager", "Error: " + e);
+			return null;
+		}
+	}
+
 	private PluginResult executePlayOrLoop(String action, JSONArray data) {
 		String audioID;
+
 		try {
 			audioID = data.getString(0);
 			//Log.d( LOGTAG, "play - " + audioID );
@@ -166,8 +218,8 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 		}
 
 		PluginResult pluginResult = new  PluginResult(PluginResult.Status.NO_RESULT);
-	  pluginResult.setKeepCallback(true);
-	  return pluginResult;
+	    pluginResult.setKeepCallback(true);
+	    return pluginResult;
 	}
 
 	private PluginResult executeStop(JSONArray data) {
@@ -228,7 +280,6 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 	@Override
 	public boolean execute(final String action, final JSONArray data, final CallbackContext callbackContext) {
 		Log.d(LOGTAG, "Plugin Called: " + action);
-
 		LowLatencyAudio.setCallbackContext(callbackContext);
 		PluginResult result = null;
 		initSoundPool();
@@ -303,8 +354,8 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 	@Override
 	public void onFinishedPlayingAudio(String status) {
 		PluginResult result = new PluginResult(PluginResult.Status.OK, status);
-	  result.setKeepCallback(false);
-	  LowLatencyAudio.getCallbackContext().sendPluginResult(result);
+	    result.setKeepCallback(false);
+	    LowLatencyAudio.getCallbackContext().sendPluginResult(result);
 	}
 
 	public static CallbackContext getCallbackContext() {

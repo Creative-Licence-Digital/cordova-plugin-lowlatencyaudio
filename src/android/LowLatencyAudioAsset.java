@@ -24,17 +24,28 @@ public class LowLatencyAudioAsset {
 	private int playIndex = 0;
 	private LowLatencyCompletionHandler savedHandler;
 
-
 	public LowLatencyAudioAsset(AssetFileDescriptor afd, int numVoices, float volume) throws IOException
 	{
 		voices = new ArrayList<PolyphonicVoice>();
-
 		if ( numVoices < 0 )
 			numVoices = 0;
 
 		for ( int x=0; x<numVoices; x++)
 		{
 			PolyphonicVoice voice = new PolyphonicVoice(afd, volume);
+			voices.add( voice );
+		}
+	}
+
+	public LowLatencyAudioAsset(String filePath, int numVoices, float volume) throws IOException
+	{
+		voices = new ArrayList<PolyphonicVoice>();
+		if ( numVoices < 0 )
+			numVoices = 0;
+
+		for ( int x=0; x<numVoices; x++)
+		{
+			PolyphonicVoice voice = new PolyphonicVoice(filePath, volume);
 			voices.add( voice );
 		}
 	}
