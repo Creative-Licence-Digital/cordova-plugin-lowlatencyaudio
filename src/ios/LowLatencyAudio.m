@@ -17,7 +17,6 @@
 //
 
 #import "LowLatencyAudio.h"
-#import <AVFoundation/AVAudioSession.h>
 
 @implementation LowLatencyAudio
 
@@ -39,15 +38,15 @@ NSString* RESTRICTED = @"ACTION RESTRICTED FOR FX AUDIO";
     // set up audio so that user can play his own music
     // the audio is still silenced by screen locking and by the Silent switch
     AudioSessionInitialize(NULL, NULL, nil , nil);
-    AVAudioSession *session = [AVAudioSession sharedInstance];
+    avSession = [AVAudioSession sharedInstance];
 
     NSError *setCategoryError = nil;
-    if (![session setCategory:AVAudioSessionCategoryAmbient
+    if (![avSession setCategory:AVAudioSessionCategoryAmbient
                         error:&setCategoryError]) {
         // handle error
     }
 
-    [session setActive: YES error: nil];
+    [avSession setActive: YES error: nil];
 }
 
 - (void) preloadFX:(CDVInvokedUrlCommand *)command
@@ -201,7 +200,11 @@ NSString* RESTRICTED = @"ACTION RESTRICTED FOR FX AUDIO";
     NSArray* arguments = command.arguments;
     NSString *audioID = [arguments objectAtIndex:0];
 
-    //NSLog( @"play - %@", audioID );
+    if (![avSession.category isEqualToString:AVAudioSessionCategoryAmbient]) {
+        [avSession setCategory:AVAudioSessionCategoryAmbient error:nil];
+    }
+
+    NSLog( @"play - %@", audioID );
     [self.commandDelegate runInBackground:^{
         if ( audioMapping ) {
             NSObject* asset = [audioMapping objectForKey: audioID];
@@ -214,6 +217,7 @@ NSString* RESTRICTED = @"ACTION RESTRICTED FOR FX AUDIO";
                         [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: ERROR_AUDIO_DID_PLAY] callbackId:callbackId];
                     }
                 }];
+
                 [_asset play];
             } else if ( [asset isKindOfClass:[NSNumber class]] ) {
                 NSNumber *_asset = (NSNumber*) asset;

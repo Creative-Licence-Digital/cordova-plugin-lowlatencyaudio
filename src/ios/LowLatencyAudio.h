@@ -19,11 +19,13 @@
 #import <Foundation/Foundation.h>
 #import <Cordova/CDVPlugin.h>
 #import <AVFoundation/AVAudioPlayer.h>
+#import <AVFoundation/AVAudioSession.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import "LowLatencyAudioAsset.h"
 
 @interface LowLatencyAudio : CDVPlugin {
-    NSMutableDictionary* audioMapping; 
+    NSMutableDictionary* audioMapping;
+    AVAudioSession *avSession;
 }
 
 //Public Instance Methods (visible in Cordova API)
@@ -37,7 +39,7 @@
 - (void) unload:(CDVInvokedUrlCommand *)command;
 
 
-//Instance Methods  
+//Instance Methods
 
 
 @end
