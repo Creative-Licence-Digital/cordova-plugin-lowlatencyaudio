@@ -120,11 +120,7 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 					fullPath = this.downloadFromUrl(assetPath, audioID);
 					asset = new LowLatencyAudioAsset(fullPath, voices, (float)volume);
 				} else {
-					fullPath = "www/".concat(assetPath);
-					Context ctx = cordova.getActivity().getApplicationContext();
-					AssetManager am = ctx.getResources().getAssets();
-					AssetFileDescriptor afd = am.openFd(fullPath);
-					asset = new LowLatencyAudioAsset(afd, voices, (float)volume);
+					asset = new LowLatencyAudioAsset(assetPath, voices, (float)volume);
 				}
 
 				assetMap.put(audioID, asset);
