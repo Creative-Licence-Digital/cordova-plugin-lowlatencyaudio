@@ -184,11 +184,13 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 
 			if (assetMap.containsKey(audioID)) {
 				LowLatencyAudioAsset asset = assetMap.get(audioID);
-				if (LOOP.equals(action))
+				if (LOOP.equals(action)) {
+					asset.setComplectionHandler(this);
 					asset.loop();
-				else
+				} else {
 					asset.setComplectionHandler(this);
 					asset.play();
+				}
 			} else if (soundMap.containsKey(audioID)) {
 				int loops = 0;
 				if (LOOP.equals(action)) {
