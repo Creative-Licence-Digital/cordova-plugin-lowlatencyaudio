@@ -351,6 +351,8 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 
 	@Override
 	public void onFinishedPlayingAudio(String status) {
+		if (getCallbackContext().isFinished()) return;
+
 		PluginResult result = new PluginResult(PluginResult.Status.OK, status);
 	    result.setKeepCallback(false);
 	    LowLatencyAudio.getCallbackContext().sendPluginResult(result);
