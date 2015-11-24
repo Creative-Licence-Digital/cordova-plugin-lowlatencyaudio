@@ -49,7 +49,6 @@
          <framework src="Foundation.framework" />
          <framework src="AVFoundation.framework" />
          <framework src="AudioToolbox.framework" />
-         <framework src="AVAudioSession.framework" />
 
          <header-file src="src/ios/LowLatencyAudio.h" />
          <source-file src="src/ios/LowLatencyAudio.m" />
