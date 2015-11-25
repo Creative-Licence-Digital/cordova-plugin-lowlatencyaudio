@@ -210,12 +210,22 @@ NSString* RESTRICTED = @"ACTION RESTRICTED FOR FX AUDIO";
             NSObject* asset = [audioMapping objectForKey: audioID];
             if ([asset isKindOfClass:[LowLatencyAudioAsset class]]) {
                 LowLatencyAudioAsset *_asset = (LowLatencyAudioAsset*) asset;
+                
                 [_asset setAudioPlayerEventDidOccur:^(AVAudioPlayer *player, NSInteger status) {
                     if (status) {
                         [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: PLAY_FINISHED] callbackId:callbackId];
                     } else {
                         [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: ERROR_AUDIO_DID_PLAY] callbackId:callbackId];
                     }
+                }];
+                
+                [_asset setOnProgress:^(float progress) {
+
+                    int pr = (int) roundf(progress * 100.0);
+                    CDVPluginResult * result =[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:pr];
+                    NSLog(@"Sending progress %d", pr);
+                    [result setKeepCallbackAsBool:true];
+                    [self.commandDelegate sendPluginResult:result callbackId:callbackId];
                 }];
 
                 [_asset play];
