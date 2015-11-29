@@ -24,15 +24,17 @@
 {
     self = [super init];
     if(self) {
-
+        
         NSURL *pathURL = [NSURL fileURLWithPath : path];
-
+        
         player = [[AVAudioPlayer alloc] initWithContentsOfURL:pathURL error: NULL];
         player.volume = volume.floatValue;
         _targetVolume = [volume floatValue];
         [player prepareToPlay];
         playIndex = 0;
+
         player.delegate = self;
+
     }
     return(self);
 }
@@ -40,8 +42,25 @@
 - (void) play
 {
     [player setCurrentTime:0.0];
+    _currentProgress = 0;
     player.numberOfLoops = 0;
     [player play];
+    [self updateProgress];
+
+}
+
+- (void) updateProgress
+{
+    float progress = [player currentTime] / [player duration];
+    if (progress >= _currentProgress && progress < 1.0) {
+        _currentProgress = progress;
+        if (self.onProgress) {
+              self.onProgress(_currentProgress);
+        }
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+            [self updateProgress];
+        });
+    }
 }
 
 - (void) stop
@@ -68,7 +87,6 @@
     [player play];
     [self doVolumeFadeIn];
 }
-
 
 -(void)doVolumeFadeIn {
     if (player.volume < _targetVolume) {
@@ -102,7 +120,7 @@
 {
     [self stop];
     player = nil;
-
+    
 }
 
 # pragma mark - AVAudioPlayerDelegate methods

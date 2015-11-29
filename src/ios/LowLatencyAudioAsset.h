@@ -1,4 +1,5 @@
 //
+
 //  LowLatencyAudioAsset.h
 //  LowLatencyAudioAsset
 //
@@ -16,7 +17,6 @@
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVAudioPlayer.h>
 
@@ -27,15 +27,19 @@
     int _ms;
     float _increment;
     float _targetVolume;
+    float _currentProgress;
 }
 
+
 @property (nonatomic, copy) void (^audioPlayerEventDidOccur)(AVAudioPlayer *player, NSInteger status);
+@property (nonatomic, copy) void (^onProgress)(float progress);
 
 -(id) initWithPath:(NSString*) path withVoices:(NSNumber*) numVoices withVolume:(NSNumber*) volume;
 - (void) play;
 - (void) stop;
 - (void) loop;
 - (void) unload;
+- (void) updateProgress;
 - (void) fadeIn:(NSNumber*) ms withIncrement:(NSNumber*) increment;
 - (void) fadeOut:(NSNumber*) ms withIncrement:(NSNumber*) increment;
 @end
