@@ -14,12 +14,15 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package com.rjfun.cordova.plugin;
 
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnPreparedListener;
+import android.util.Log;
 
 public class PolyphonicVoice implements OnPreparedListener, OnCompletionListener {
 
@@ -32,6 +35,7 @@ public class PolyphonicVoice implements OnPreparedListener, OnCompletionListener
 
 	private MediaPlayer mp;
 	private int state;
+	private float currentProgress = 0;
 
 	private LowLatencyCompletionHandler savedHandler;
 
@@ -58,14 +62,17 @@ public class PolyphonicVoice implements OnPreparedListener, OnCompletionListener
 		mp.setOnCompletionListener(new OnCompletionListener() {
 			@Override
 			public void onCompletion(MediaPlayer mp) {
-				savedHandler.onFinishedPlayingAudio("PLAY FINISHED");
+				if (savedHandler != null) {
+					savedHandler.onFinishedPlayingAudio("PLAY FINISHED");
+				}
 			}
 		});
 	}
 
 	public void play() throws IOException
 	{
-		invokePlay( false );
+		invokePlay(false);
+		updateProgress();
 	}
 
 	private void invokePlay( Boolean loop )
@@ -81,7 +88,7 @@ public class PolyphonicVoice implements OnPreparedListener, OnCompletionListener
 		if ( !playing && state == PREPARED )
 		{
 			state = PENDING_LOOP;
-			onPrepared( mp );
+			onPrepared(mp);
 		}
 		else if ( !playing )
 		{
@@ -103,13 +110,31 @@ public class PolyphonicVoice implements OnPreparedListener, OnCompletionListener
 
 	public void loop() throws IOException
 	{
-		invokePlay( true );
+		invokePlay(true);
 	}
 
 	public void unload() throws IOException
 	{
 		this.stop();
 		mp.release();
+	}
+
+	public void updateProgress() {
+		Log.d("LowLatencyAudio", "progress " + mp.getCurrentPosition() + " " + mp.getDuration());
+		float progress = mp.getCurrentPosition() / mp.getDuration();
+		// Deal with the Android bug: https://code.google.com/p/android/issues/detail?id=38627
+		if (mp.getDuration() - mp.getCurrentPosition() > 1000 && progress < 1.0) {
+			currentProgress = progress;
+
+			savedHandler.onProgress(currentProgress);
+			Timer timer = new Timer();
+			timer.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					updateProgress();
+				}
+			}, 500);
+		}
 	}
 
 	public void onPrepared(MediaPlayer mPlayer)

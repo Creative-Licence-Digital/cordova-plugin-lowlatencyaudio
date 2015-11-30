@@ -71,7 +71,6 @@ public class LowLatencyAudioAsset {
 	public void loop() throws IOException
 	{
 		PolyphonicVoice voice = voices.get(playIndex);
-		voice.setComplectionHandler(savedHandler);
 		voice.loop();
 		playIndex++;
 		playIndex = playIndex % voices.size();
@@ -91,5 +90,4 @@ public class LowLatencyAudioAsset {
 	public void setComplectionHandler(LowLatencyCompletionHandler complectionHandler) {
 		this.savedHandler = complectionHandler;
 	}
-
 }
