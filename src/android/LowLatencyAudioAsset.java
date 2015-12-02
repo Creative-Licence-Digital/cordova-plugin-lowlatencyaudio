@@ -87,6 +87,17 @@ public class LowLatencyAudioAsset {
 		voices.removeAll(voices);
 	}
 
+	public void fadeIn(float fadeDuration, float increment) throws IOException
+	{
+		PolyphonicVoice voice = voices.get(playIndex);
+		voice.fadeIn(fadeDuration, increment);
+	}
+
+	public void fadeOut(float fadeDuration, float increment) throws IOException
+	{
+		PolyphonicVoice voice = voices.get(playIndex);
+		voice.fadeOut(fadeDuration, increment);
+	}
 	public void setComplectionHandler(LowLatencyCompletionHandler complectionHandler) {
 		this.savedHandler = complectionHandler;
 	}

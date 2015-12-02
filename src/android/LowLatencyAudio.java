@@ -52,6 +52,8 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 	public static final String PLAY="play";
 	public static final String STOP="stop";
 	public static final String LOOP="loop";
+	public static final String FADE_IN="fadeIn";
+	public static final String FADE_OUT="fadeOut";
 	public static final String UNLOAD="unload";
 
 	public static final int DEFAULT_POLYPHONY_VOICES = 15;
@@ -175,7 +177,7 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 		}
 	}
 
-	private PluginResult executePlayOrLoop(String action, JSONArray data) {
+	private PluginResult executeAudioPlay(String action, JSONArray data) {
 		String audioID;
 
 		try {
@@ -186,6 +188,14 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 				LowLatencyAudioAsset asset = assetMap.get(audioID);
 				if (LOOP.equals(action)) {
 					asset.loop();
+				} else if (FADE_IN.equals(action)) {
+					float fadeDuration = (float) data.getDouble(1);
+					float increment = (float) data.getDouble(2);
+					asset.fadeIn(fadeDuration, increment);
+				} else if (FADE_OUT.equals(action)) {
+					float fadeDuration = (float) data.getDouble(1);
+					float increment = (float) data.getDouble(2);
+					asset.fadeOut(fadeDuration, increment);
 				} else {
 					asset.setComplectionHandler(this);
 					asset.play();
@@ -296,10 +306,10 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 					}
 				});
 
-			} else if (PLAY.equals(action) || LOOP.equals(action)) {
+			} else if (PLAY.equals(action) || LOOP.equals(action) || FADE_IN.equals(action) || FADE_OUT.equals(action)) {
 				cordova.getThreadPool().execute(new Runnable() {
 		            public void run() {
-		            	callbackContext.sendPluginResult( executePlayOrLoop(action, data) );
+		            	callbackContext.sendPluginResult( executeAudioPlay(action, data));
 		            }
 		        });
 
