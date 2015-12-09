@@ -52,6 +52,8 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 	public static final String PLAY="play";
 	public static final String STOP="stop";
 	public static final String LOOP="loop";
+	public static final String FADE_IN="fadeIn";
+	public static final String FADE_OUT="fadeOut";
 	public static final String UNLOAD="unload";
 
 	public static final int DEFAULT_POLYPHONY_VOICES = 15;
@@ -120,11 +122,7 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 					fullPath = this.downloadFromUrl(assetPath, audioID);
 					asset = new LowLatencyAudioAsset(fullPath, voices, (float)volume);
 				} else {
-					fullPath = "www/".concat(assetPath);
-					Context ctx = cordova.getActivity().getApplicationContext();
-					AssetManager am = ctx.getResources().getAssets();
-					AssetFileDescriptor afd = am.openFd(fullPath);
-					asset = new LowLatencyAudioAsset(afd, voices, (float)volume);
+					asset = new LowLatencyAudioAsset(assetPath, voices, (float)volume);
 				}
 
 				assetMap.put(audioID, asset);
@@ -179,7 +177,7 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 		}
 	}
 
-	private PluginResult executePlayOrLoop(String action, JSONArray data) {
+	private PluginResult executeAudioPlay(String action, JSONArray data) {
 		String audioID;
 
 		try {
@@ -188,11 +186,20 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 
 			if (assetMap.containsKey(audioID)) {
 				LowLatencyAudioAsset asset = assetMap.get(audioID);
-				if (LOOP.equals(action))
+				if (LOOP.equals(action)) {
 					asset.loop();
-				else
+				} else if (FADE_IN.equals(action)) {
+					float fadeDuration = (float) data.getDouble(1);
+					float increment = (float) data.getDouble(2);
+					asset.fadeIn(fadeDuration, increment);
+				} else if (FADE_OUT.equals(action)) {
+					float fadeDuration = (float) data.getDouble(1);
+					float increment = (float) data.getDouble(2);
+					asset.fadeOut(fadeDuration, increment);
+				} else {
 					asset.setComplectionHandler(this);
 					asset.play();
+				}
 			} else if (soundMap.containsKey(audioID)) {
 				int loops = 0;
 				if (LOOP.equals(action)) {
@@ -287,22 +294,22 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 		try {
 			if (PRELOAD_FX.equals(action)) {
 				cordova.getThreadPool().execute(new Runnable() {
-		            public void run() {
-		            	callbackContext.sendPluginResult( executePreloadFX(data) );
-		            }
-		        });
+					public void run() {
+						callbackContext.sendPluginResult(executePreloadFX(data));
+					}
+				});
 
 			} else if (PRELOAD_AUDIO.equals(action)) {
 				cordova.getThreadPool().execute(new Runnable() {
-		            public void run() {
-		            	callbackContext.sendPluginResult( executePreloadAudio(data) );
-		            }
-		        });
+					public void run() {
+						callbackContext.sendPluginResult(executePreloadAudio(data));
+					}
+				});
 
-			} else if (PLAY.equals(action) || LOOP.equals(action)) {
+			} else if (PLAY.equals(action) || LOOP.equals(action) || FADE_IN.equals(action) || FADE_OUT.equals(action)) {
 				cordova.getThreadPool().execute(new Runnable() {
 		            public void run() {
-		            	callbackContext.sendPluginResult( executePlayOrLoop(action, data) );
+		            	callbackContext.sendPluginResult( executeAudioPlay(action, data));
 		            }
 		        });
 
@@ -353,9 +360,20 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 
 	@Override
 	public void onFinishedPlayingAudio(String status) {
+		if (getCallbackContext().isFinished()) return;
+
 		PluginResult result = new PluginResult(PluginResult.Status.OK, status);
 	    result.setKeepCallback(false);
 	    LowLatencyAudio.getCallbackContext().sendPluginResult(result);
+	}
+
+	@Override
+	public void onProgress(float progress) {
+		int pr = (int) Math.round(progress * 100);
+		PluginResult result = new PluginResult(PluginResult.Status.OK, pr);
+		Log.d(LOGTAG, "Sending progress " + pr + "%");
+		result.setKeepCallback(true);
+		LowLatencyAudio.getCallbackContext().sendPluginResult(result);
 	}
 
 	public static CallbackContext getCallbackContext() {
