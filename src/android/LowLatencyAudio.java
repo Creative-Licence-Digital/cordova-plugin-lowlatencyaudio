@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -27,7 +28,6 @@ import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
 import org.apache.cordova.PluginResult.Status;
-import org.apache.http.util.ByteArrayBuffer;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -158,15 +158,18 @@ public class LowLatencyAudio extends CordovaPlugin implements LowLatencyCompleti
 			BufferedInputStream bis = new BufferedInputStream(is);
 
 			/* Read bytes to the Buffer until there is nothing more to read(-1). */
-			ByteArrayBuffer baf = new ByteArrayBuffer(5000);
+			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+			//We create an array of bytes
+			byte[] data = new byte[1024];
 			int current = 0;
-			while ((current = bis.read()) != -1) {
-				baf.append((byte) current);
+
+			while((current = bis.read(data,0,data.length)) != -1){
+				buffer.write(data,0,current);
 			}
 
 			/* Convert the Bytes read to a String. */
 			FileOutputStream fos = new FileOutputStream(file);
-			fos.write(baf.toByteArray());
+			fos.write(buffer.toByteArray());
 			fos.flush();
 			fos.close();
 			Log.d("DownloadManager", "download ready in" + ((System.currentTimeMillis() - startTime) / 1000) + " sec");
